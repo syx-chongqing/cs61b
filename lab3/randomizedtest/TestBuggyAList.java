@@ -39,14 +39,14 @@ public class TestBuggyAList {
                 assertEquals(integerBuggyAList.size(), integerAListNoResizing.size());
             } else if (operationNumber == 2) {
                 //getLast
-                if (integerBuggyAList.size() != 0 && integerAListNoResizing.size() != 0) {
+                if (integerBuggyAList.size() != 0 || integerAListNoResizing.size() != 0) {
                     assertEquals(integerBuggyAList.getLast(), integerAListNoResizing.getLast());
                 } else {
                     continue;
                 }
             } else {
                 //removeLast
-                if (integerBuggyAList.size() != 0 && integerAListNoResizing.size() != 0) {
+                if (integerBuggyAList.size() != 0 || integerAListNoResizing.size() != 0) {
                     assertEquals(integerBuggyAList.removeLast(), integerAListNoResizing.removeLast());
                 } else {
                     continue;
