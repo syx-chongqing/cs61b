@@ -2,8 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<T> implements Deque<T>, Iterable<T>{
-
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private static final double FACTOR = 0.25;
     private int size;
     private int nextFirst;
@@ -121,7 +120,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T>{
     }
     private class ArrayDequeIterator implements Iterator<T> {
         private int wizPos;
-        public ArrayDequeIterator() {
+        ArrayDequeIterator() {
             wizPos = 0;
         }
 

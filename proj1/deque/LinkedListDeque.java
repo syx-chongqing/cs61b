@@ -8,11 +8,11 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private int size;
     public LinkedListDeque() {
         size = 0;
-        sentinel = new IntNode((T)new Object());
+        sentinel = new IntNode((T) new Object());
         sentinel.prev = sentinel;
         sentinel.next = sentinel;
     }
-    public class IntNode {
+    private class IntNode {
         IntNode next;
         IntNode prev;
         T item;
@@ -119,7 +119,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     }
     private class LinkedListDequeIterator implements Iterator<T> {
         private int wizPos;
-        public LinkedListDequeIterator() {
+        LinkedListDequeIterator() {
             wizPos = 0;
         }
 
