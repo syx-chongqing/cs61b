@@ -1,6 +1,8 @@
 package deque;
 
-public class ArrayDeque<T> implements Deque<T>{
+import java.util.Iterator;
+
+public class ArrayDeque<T> implements Deque<T>, Iterable<T>{
 
     private static final double FACTOR = 0.25;
     private int size;
@@ -56,10 +58,7 @@ public class ArrayDeque<T> implements Deque<T>{
         nextLast = parseIndex(nextLast + 1);
     }
 
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
+
 
     @Override
     public int size() {
@@ -116,8 +115,43 @@ public class ArrayDeque<T> implements Deque<T>{
         return array[tempIndex];
     }
 
-//    @Override
-//    public Iterator<T> iterator() {
-//        return null;
-//    }
+    @Override
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
+    private class ArrayDequeIterator implements Iterator<T> {
+        private int wizPos;
+        public ArrayDequeIterator() {
+            wizPos = 0;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return wizPos < size;
+        }
+
+        @Override
+        public T next() {
+            T returnItem = get(wizPos);
+            wizPos += 1;
+            return returnItem;
+        }
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Deque)) {
+            return false;
+        }
+        if (size() != ((Deque<?>) o).size()) {
+            return false;
+        }
+        for (int i = 0; i < size; i++) {
+            if (!get(i).equals(((Deque<?>) o).get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
