@@ -1,6 +1,9 @@
 package gitlet;
 
 import java.io.File;
+import java.time.Instant;
+import java.util.HashMap;
+
 import static gitlet.Utils.*;
 
 // TODO: any imports you need here
@@ -24,6 +27,15 @@ public class Repository {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
+    public static final Commit initialCommit = new Commit("initial commit", Instant.ofEpochSecond(0), null, null, new HashMap<>());
+    public static final File BLOBS_DIR = join(GITLET_DIR, "blobs");
+    public static final File COMMITS_DIR = join(GITLET_DIR, "commits");
+    public static void init() {
+        if (GITLET_DIR.exists()) {
+            System.out.println("A Gitlet version-control system already exists in the current directory.");
+        }
+        GITLET_DIR.mkdir();
+        createForCommit(COMMITS_DIR, initialCommit);
+    }
 
-    /* TODO: fill in the rest of this class. */
 }

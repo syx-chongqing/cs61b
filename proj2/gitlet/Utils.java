@@ -24,9 +24,64 @@ import java.util.List;
  * Give this file a good read as it provides several useful utility functions
  * to save you some time.
  *
- *  @author P. N. Hilfinger
+ *  @author P. N. Hilfinger and syx
  */
 class Utils {
+    /**
+     * 得到FIle 文件的sha1前两个字符
+     * @param vals
+     * @return String
+     */
+    public static String theTwoSha1ForFile(Object... vals) {
+        return sha1ForFile(vals).substring(0, 2);
+    }
+
+    /**
+     * 得到FIle 文件的sha1
+     * @param vals
+     * @return
+     */
+    public static String sha1ForFile(Object... vals) {
+        return sha1(vals);
+    }
+    /**
+     * 得到Commit的sha1的前两个字符
+     * @param commit
+     * @return String
+     */
+    public static String theTwoSha1ForObject(Commit commit) {
+        return sha1ForObject(commit).substring(0, 2);
+    }
+
+    /**
+     * 得到Commit的sha1
+     * @param commit
+     * @return
+     */
+    public static String sha1ForObject(Commit commit) {
+        byte[] serialize = serialize(commit);
+        String sha1 = sha1(serialize);
+        return sha1;
+    }
+
+    /**
+     * 针对于commit来说的， 在.gitlet的folder下创建一个文件夹，即sha1的前两个字符，然后在新创建的文件夹下，创建这个文件，文件名就是sha1
+     * @param folder
+     * @param commit
+     */
+    public static void createForCommit(File folder, Commit commit) {
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+        String sha1 = sha1ForObject(commit);
+        if (!join(folder, sha1.substring(0, 2)).exists()) {
+            join(folder, sha1.substring(0, 2)).mkdir();
+        }
+        Utils.writeObject(join(join(folder, sha1.substring(0, 2), sha1)), commit);
+
+
+    }
+
 
     /** The length of a complete SHA-1 UID as a hexadecimal numeral. */
     static final int UID_LENGTH = 40;
