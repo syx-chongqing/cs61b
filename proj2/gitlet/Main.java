@@ -20,7 +20,23 @@ public class Main {
                 Repository.init();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
+                if (args.length != 2) {
+                    System.exit(0);
+                }
+                Repository.add(args[1]);
+                break;
+            case "rm":
+                if (args.length != 2) {
+                    System.exit(0);
+                }
+                Repository.rm(args[1]);
+                break;
+            case "commit":
+                if (args.length != 2) {
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
+                }
+                Repository.commit(args[1]);
                 break;
             default:
                 System.out.println("No command with that name exists.");

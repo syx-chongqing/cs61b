@@ -16,6 +16,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -27,22 +28,23 @@ import java.util.List;
  *  @author P. N. Hilfinger and syx
  */
 class Utils {
+
     /**
      * 得到FIle 文件的sha1前两个字符
-     * @param vals
+     * @param file
      * @return String
      */
-    public static String theTwoSha1ForFile(Object... vals) {
-        return sha1ForFile(vals).substring(0, 2);
+    public static String theTwoSha1ForFile(File file) {
+        return sha1ForFile(file).substring(0, 2);
     }
 
     /**
      * 得到FIle 文件的sha1
-     * @param vals
+     * @param file
      * @return
      */
-    public static String sha1ForFile(Object... vals) {
-        return sha1(vals);
+    public static String sha1ForFile(File file) {
+        return sha1(readContents(file));
     }
     /**
      * 得到Commit的sha1的前两个字符
@@ -80,6 +82,44 @@ class Utils {
         Utils.writeObject(join(join(folder, sha1.substring(0, 2), sha1)), commit);
 
 
+    }
+
+    /**
+     * 把file放到Stag 区域中
+     * @param file
+     */
+    public static void pushFileToStag(File file) {
+        if (!Repository.STAGS_DIR.exists()) {
+            Repository.STAGS_DIR.mkdir();
+        }
+        String sha1 = sha1ForFile(file);
+        //添加file(normal case)
+        if (!join(Repository.STAGS_DIR, sha1.substring(0, 2)).exists()) {
+            join(Repository.STAGS_DIR, sha1.substring(0, 2)).mkdir();
+        }
+        Utils.writeContents(join(join(Repository.STAGS_DIR, sha1.substring(0, 2)), sha1), readContents(file));
+
+    }
+    public static void saveForAddFileMap() {
+        if (!Repository.UTILS_DIR.exists()) {
+            Repository.UTILS_DIR.mkdir();
+        }
+        writeObject(join(Repository.UTILS_DIR, "addFileMap"), Repository.addFileMap);
+
+    }
+    public static void saveForRmFileMap() {
+        if (!join(Repository.UTILS_DIR).exists()) {
+            Repository.UTILS_DIR.mkdir();
+        }
+        writeObject(join(Repository.UTILS_DIR, "rmFileMap"), Repository.rmFileMap);
+    }
+    public static void loadForAddFileMap() {
+        HashMap addFileMapTemp = readObject(join(Repository.UTILS_DIR, "addFileMap"), HashMap.class);
+        Repository.addFileMap.putAll(addFileMapTemp);
+    }
+    public static void loadForRmFileMap() {
+        HashMap rmFileMapTemp = readObject(join(Repository.UTILS_DIR, "rmFileMap"), HashMap.class);
+        Repository.rmFileMap.putAll(rmFileMapTemp);
     }
 
 
