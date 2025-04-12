@@ -100,6 +100,35 @@ class Utils {
         Utils.writeContents(join(join(Repository.STAGS_DIR, sha1.substring(0, 2)), sha1), readContents(file));
 
     }
+
+    /**
+     * 因为是从stages那边拿文件过来，所以直接复制粘贴就行，不需要之前那么麻烦
+     * @param sha1  文件的sha1值
+     */
+    public static void pushFileToBlob(String sha1) {
+        if (!join(Repository.BLOBS_DIR, sha1.substring(0, 2)).exists()) {
+            join(Repository.BLOBS_DIR, sha1.substring(0, 2)).mkdir();
+        }
+        if (join(join(Repository.BLOBS_DIR, sha1.substring(0, 2)), sha1).exists()) {
+            return;
+        }
+        File file = join(join(Repository.BLOBS_DIR, sha1.substring(0, 2)), sha1);
+        writeContents(file, readContents(join(join(Repository.STAGS_DIR, sha1.substring(0, 2)), sha1)));
+    }
+
+    /**
+     * 删除这整个文件夹下的内容,并包括自身这个文件夹
+     * @param file
+     */
+    public static void deleteDirectory(File file) {
+        File[] files = file.listFiles();
+        if (files != null) {
+            for (File temp : files) {
+                deleteDirectory(temp);
+            }
+        }
+        file.delete();
+    }
     public static void saveForAddFileMap() {
         if (!Repository.UTILS_DIR.exists()) {
             Repository.UTILS_DIR.mkdir();
@@ -108,7 +137,7 @@ class Utils {
 
     }
     public static void saveForRmFileMap() {
-        if (!join(Repository.UTILS_DIR).exists()) {
+        if (!Repository.UTILS_DIR.exists()) {
             Repository.UTILS_DIR.mkdir();
         }
         writeObject(join(Repository.UTILS_DIR, "rmFileMap"), Repository.rmFileMap);
@@ -121,7 +150,22 @@ class Utils {
         HashMap rmFileMapTemp = readObject(join(Repository.UTILS_DIR, "rmFileMap"), HashMap.class);
         Repository.rmFileMap.putAll(rmFileMapTemp);
     }
-
+    public static void saveForHead() {
+        if (!Repository.UTILS_DIR.exists()) {
+            Repository.UTILS_DIR.mkdir();
+        }
+        writeObject(join(Repository.UTILS_DIR, "head"), Repository.head);
+    }
+    public static void loadForHead() {
+        Repository.head = readObject(join(Repository.UTILS_DIR, "head"), Commit.class);
+    }
+    public static void saveForCommit(Commit commit) {
+        String commitSha1 = sha1ForObject(commit);
+        if (!join(Repository.COMMITS_DIR, commitSha1.substring(0, 2)).exists()) {
+            join(Repository.COMMITS_DIR, commitSha1.substring(0, 2)).mkdir();
+        }
+        writeObject(join(join(Repository.COMMITS_DIR, commitSha1.substring(0, 2)), commitSha1), commit);
+    }
 
     /** The length of a complete SHA-1 UID as a hexadecimal numeral. */
     static final int UID_LENGTH = 40;

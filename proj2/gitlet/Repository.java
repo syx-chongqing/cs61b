@@ -22,17 +22,21 @@ public class Repository {
     public static final File BLOBS_DIR = join(GITLET_DIR, "blobs");
     public static final File COMMITS_DIR = join(GITLET_DIR, "commits");
     public static final File STAGS_DIR = join(GITLET_DIR, "stages");
-    public static final HashMap<String, String> addFileMap = new HashMap<>(); // key 为fileName, value 为File 的sha1
-    public static final HashMap<String, String> rmFileMap = new HashMap<>(); // key 为fileName, value 为File 的sha1
+    public static HashMap<String, String> addFileMap = new HashMap<>(); // key 为fileName, value 为File 的sha1
+    public static HashMap<String, String> rmFileMap = new HashMap<>(); // key 为fileName, value 为File 的sha1
     public static final File UTILS_DIR = join(GITLET_DIR, "utils");
+    public static Commit head = initialCommit;//Head指向的是当前节点（即使有两个分支也会有一个Head) // 每次commit后都需要更新head
     public static void init() {
         if (GITLET_DIR.exists()) {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
         }
         GITLET_DIR.mkdir();
+        BLOBS_DIR.mkdir();
         createForCommit(COMMITS_DIR, initialCommit);
         saveForAddFileMap();
         saveForRmFileMap();
+        saveForHead();
+
     }
 
 
@@ -42,13 +46,33 @@ public class Repository {
      * 2.
      * 如果一个已经暂存的文件再次被添加，那么它在暂存区中的内容会被新的内容覆盖,原来的暂存的文件在stage的备份删除
      * 3.
-     * 如果当前工作目录中的文件内容与当前提交中的版本完全相同，则不应将其暂存添加(needed to be done in commit) TODO:
+     * 如果当前工作目录中的文件内容与当前提交中的版本完全相同，则不应将其暂存添加
      * 4.
-     *  如果该文件已在暂存区中，应将其从暂存区移除（这种情况可能发生在文件被修改、添加到暂存区后又改回原样的情况下）（needed to be done in commit) TODO:
+     *  如果该文件已在暂存区中，应将其从暂存区移除（这种情况可能发生在文件被修改、添加到暂存区后又改回原样的情况下）
      * 5.
-     * 如果该文件之前被标记为删除（见 `gitlet rm`），那么这次 `add` 操作应使其不再被标记删除 （needed to be done in rm) TODO:
+     * 如果该文件之前被标记为删除（见 `gitlet rm`），那么这次 `add` 操作应使其不再被标记删除
      * 6.如果args.length == 1,即没有指明文件名，直接退出,已经在Main类处理了
      * 7.如果文件不存在，则输出File does not exist.然后退出
+     * 实现方式
+     * 第一种情况A:
+     * 如果Head有这个filename
+     *      如果head的这个文件的sha1 value与文件的sha1 value相同：
+     *             如果filename 在 rmFileMap中，则把他从rmFileMap中删除，其他不做
+     *             如果filename 不在rmFileMap 中
+     *                      如果暂存区有这个filename,则把他从暂存区中删除
+     *                      如果暂存区没有这个filename,则不做改变，也不把它放到暂存区中
+     *      如果head的这个文件的sha1value 与文件的sha1 value不同：
+     *             如果暂存区有这个filename
+     *                      如果两个sha1value相同，则不做改变
+     *                      如果两个sha1value不同，则把原来的暂存区的删除，把新的放到暂存区中
+     *             如果暂存区没有这个filename，则把他放到暂存区中（case1）
+     * 第二种情况B:
+     * 如果Head没有这个filename
+     *      如果暂存区中有这个filename：
+     *             如果两个sha1value相同，则不做改变
+     *             如果两个sha1value不同，则把原来的暂存区的删除，把新的放到暂存区中
+     *      如果暂存区没有这个filename，把他放到暂存区中（case1）
+     *
      * @param fileName
      */
     public static void add(String fileName) {
@@ -59,25 +83,77 @@ public class Repository {
             System.exit(0);
         }
         loadForAddFileMap();
-        if (addFileMap.containsKey(fileName)) {
-            //case 2 这个文件已经被添加过了，如果sha1相同则不做改变，如果sha1不同则删除原来的在stage的文件，并pushFileToStag新文件，并修改addFileMap
-            if (sha1ForFile(join(CWD, fileName)).equals(addFileMap.get(fileName))) {
-                System.exit(0);
+        loadForHead();
+        loadForRmFileMap();
+        Commit originalCommit = head;
+        HashMap<String, String> originalCommitMap = originalCommit.getMap();
+        if (originalCommitMap.containsKey(fileName)) {
+            //如果Head有这个filename
+            if (originalCommitMap.get(fileName).equals(sha1ForFile(file))) {
+                //如果head的这个文件的sha1 value与文件的sha1 value相同
+                if (rmFileMap.containsKey(fileName)) {
+                    //如果filename 在 rmFileMap中，则把他从rmFileMap中删除，其他不做
+                    rmFileMap.remove(fileName);
+                } else {
+                    //如果filename 不在rmFileMap中
+                    if (addFileMap.containsKey(fileName)) {
+                        //如果暂存区有这个filename,则把他从暂存区中删除
+                        String originalSha1Value = addFileMap.get(fileName);
+                        addFileMap.remove(fileName);
+                        join(join(STAGS_DIR, originalSha1Value.substring(0, 2)), originalSha1Value).delete();
+                        join(STAGS_DIR, originalSha1Value.substring(0, 2)).delete();
+                    } else {
+                        //如果暂存区没有这个filename,则不做改变，也不把它放到暂存区中
+
+                    }
+                }
             } else {
-                //删除原来的在stage的文件
-                String sha1OriginalFile = addFileMap.get(fileName);
-                join(join(STAGS_DIR, sha1OriginalFile.substring(0, 2)), sha1OriginalFile).delete();
-                pushFileToStag(file);
-                addFileMap.put(fileName, sha1ForFile(file));
-                saveForAddFileMap();
+                //如果head的这个文件的sha1value 与文件的sha1 value不同
+                if (addFileMap.containsKey(fileName)) {
+                    //如果暂存区有这个filename
+                    if (addFileMap.get(fileName).equals(sha1ForFile(file))) {
+                        //如果两个sha1value相同，则不做改变
+                    } else {
+                        //如果两个sha1value不同，则把原来的暂存区的删除，把新的放到暂存区中
+                        String originalSha1Value = addFileMap.get(fileName);
+                        join(join(STAGS_DIR, originalSha1Value.substring(0, 2)), originalSha1Value).delete();
+                        join(STAGS_DIR, originalSha1Value.substring(0, 2)).delete();
+                        addFileMap.remove(fileName);
+                        addFileMap.put(fileName, sha1ForFile(file));
+                        pushFileToStag(file);
+
+                    }
+                } else {
+                    //如果暂存区没有这个filename，则把他放到暂存区中（case1）
+                    addFileMap.put(fileName, sha1ForFile(file));
+                    pushFileToStag(file);
+                }
+
             }
         } else {
-            //这个文件没有被添加过，因此直接加入到addFileMap并且pushFileToStag(case 1)
-            addFileMap.put(fileName, sha1ForFile(file));
-            pushFileToStag(file);
-            saveForAddFileMap();
+            //如果Head没有这个filename
+            if (addFileMap.containsKey(fileName)) {
+                //如果暂存区中有这个filename
+                if (addFileMap.get(fileName).equals(sha1ForFile(file))) {
+                    //如果两个sha1value相同，则不做改变
+                } else {
+                    //如果两个sha1value不同，则把原来的暂存区的删除，把新的放到暂存区中
+                    String originalSha1Value = addFileMap.get(fileName);
+                    join(join(STAGS_DIR, originalSha1Value.substring(0, 2)), originalSha1Value).delete();
+                    join(STAGS_DIR, originalSha1Value.substring(0, 2)).delete();
+                    addFileMap.remove(fileName);
+                    addFileMap.put(fileName, sha1ForFile(file));
+                    pushFileToStag(file);
+                }
+            } else {
+                //如果暂存区没有这个filename，把他放到暂存区中（case1）
+                addFileMap.put(fileName, sha1ForFile(file));
+                pushFileToStag(file);
+            }
         }
-
+        saveForRmFileMap();
+        saveForHead();
+        saveForAddFileMap();
 
 
     }
@@ -87,23 +163,48 @@ public class Repository {
      *
      * 2.如果当前提交已经追踪了某个文件，而用户执行了rm命令，那么这个文件会被标记为移除，即他将不再被当前提交追踪，
      * 并且会被从工作目录中删除（如果之前已经手动删除了，就直接标记为移除，不再被当前提交追踪，不需要从工作目录中删除，
-     * 这里只需要一个判断条件就好了，但测试还是两个文件）TODO:
+     * 这里只需要一个判断条件就好了，但测试还是两个文件）
      *
-     * 3.如果文件既未加入暂存区也未被当前提交追踪，输出：`No reason to remove the file.` TODO:
+     * 3.如果文件既未加入暂存区也未被当前提交追踪，输出：`No reason to remove the file.`
      * @param fileName
      */
     public static void rm(String fileName) {
+        //注意顺序，首先需要验证第一个
         loadForAddFileMap();
+        loadForRmFileMap();
+        loadForHead();
         if (addFileMap.get(fileName) != null) {
             addFileMap.remove(fileName);
+            saveForAddFileMap();
+            System.exit(0);
         }
-        saveForAddFileMap();
+        Commit originalCommit = head;
+        String originalCommitSha1 = sha1ForObject(originalCommit);
+        HashMap<String, String> originalCommitMap = originalCommit.getMap();
+        if (!originalCommitMap.containsKey(fileName)) {
+            System.out.println("No reason to remove the file.");
+            System.exit(0);
+        } else {
+            rmFileMap.put(fileName, originalCommitMap.get(fileName));
+            if (!join(CWD, fileName).exists()) {
+
+            } else {
+                join(CWD, fileName).delete();
+            }
+        }
+        saveForRmFileMap();
+
+
+
     }
 
     /**
      * 1.如果消息为空，输出：`Please enter a commit message.(已经在main处理了）
      * 2.如果没有文件被暂存，且没有文件被rm，则输出：`No changes added to the commit.`
-     * 3.
+     * 3.默认提交内容 = 父提交内容 + 本次添加/移除的内容更新
+     * 注意：
+     * 1.提交后暂存区会被清空
+     * 2.用head指向当前新的提交（并且需要save)
      * @param message
      */
     public static void commit(String message) {
@@ -113,6 +214,32 @@ public class Repository {
             System.out.println("No changes added to the commit");
             System.exit(0);
         }
+        loadForHead();
+        Commit originalCommit = head;
+        String originalCommitSha1 = sha1ForObject(originalCommit);
+        HashMap<String, String> originalCommitMap = originalCommit.getMap();
+        HashMap<String, String> newCommitMap = new HashMap<>();
+        newCommitMap.putAll(originalCommitMap);
+        for (String s : rmFileMap.keySet()) {
+            newCommitMap.remove(s);
+        }
+        newCommitMap.putAll(addFileMap);
+        for (String key : newCommitMap.keySet()) {
+            String sha1File = newCommitMap.get(key);
+            pushFileToBlob(sha1File);
+        }
+        Commit newCommit = new Commit(message, Instant.now(), originalCommitSha1, null, newCommitMap);
+        head = newCommit;
+        saveForHead();
+        Utils.saveForCommit(newCommit);
+        addFileMap = new HashMap<>();
+        rmFileMap  = new HashMap<>();
+        saveForRmFileMap();
+        saveForAddFileMap();
+        deleteDirectory(STAGS_DIR);
+        STAGS_DIR.mkdir();
+
     }
+
 
 }

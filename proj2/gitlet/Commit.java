@@ -36,4 +36,7 @@ public class Commit implements Serializable {
         this.map = map;
     }
 
+    public HashMap<String, String> getMap() {
+        return map;
+    }
 }
