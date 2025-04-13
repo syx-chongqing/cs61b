@@ -28,6 +28,14 @@ public class Commit implements Serializable {
     private String parentSha2;
     private HashMap<String, String> map; // Key 是文件名， Value 是文件对应的 Sha1
 
+    public String getMessage() {
+        return message;
+    }
+
+    public Instant getCommit_date() {
+        return commit_date;
+    }
+
     public Commit(String message, Instant commit_date, String parentSha1, String parentSha2, HashMap<String, String> map) {
         this.message = message;
         this.commit_date = commit_date;
@@ -38,5 +46,13 @@ public class Commit implements Serializable {
 
     public HashMap<String, String> getMap() {
         return map;
+    }
+
+    public String getParentSha1() {
+        return parentSha1;
+    }
+
+    public String getParentSha2() {
+        return parentSha2;
     }
 }

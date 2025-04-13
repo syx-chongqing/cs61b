@@ -14,10 +14,11 @@ import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Formatter;
-import java.util.HashMap;
-import java.util.List;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 
 /** Assorted utilities.
@@ -54,7 +55,26 @@ class Utils {
     public static String theTwoSha1ForObject(Commit commit) {
         return sha1ForObject(commit).substring(0, 2);
     }
-
+    public static void showCommitForBasicLog(Commit commit) {
+        System.out.println("===");
+        System.out.print("commit ");
+        System.out.println(sha1ForObject(commit));
+        Instant commitInstant = commit.getCommit_date();
+        ZonedDateTime localDateTime = commitInstant.atZone(ZoneId.systemDefault());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
+        String formattedTime = formatter.format(localDateTime);
+        System.out.println("Date: " + formattedTime);
+        System.out.println(commit.getMessage());
+        System.out.println();
+    }
+    /**
+     * 由commit的sha1value得到commit这个对象
+     * @param commitSha1Value
+     * @return
+     */
+    public static Commit getCommit(String commitSha1Value) {
+        return readObject(join(join(Repository.COMMITS_DIR), commitSha1Value.substring(0, 2), commitSha1Value), Commit.class);
+    }
     /**
      * 得到Commit的sha1
      * @param commit

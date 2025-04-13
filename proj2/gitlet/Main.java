@@ -38,6 +38,12 @@ public class Main {
                 }
                 Repository.commit(args[1]);
                 break;
+            case "log":
+                if (args.length != 1) {
+                    System.exit(0);
+                }
+                Repository.log();
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);

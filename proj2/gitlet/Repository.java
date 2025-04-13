@@ -2,7 +2,11 @@ package gitlet;
 
 import java.io.File;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 
 import static gitlet.Utils.*;
 
@@ -238,6 +242,24 @@ public class Repository {
         saveForAddFileMap();
         deleteDirectory(STAGS_DIR);
         STAGS_DIR.mkdir();
+
+    }
+    public static void log() {
+        loadForHead();
+        Commit temp = head;
+        while (!sha1ForObject(temp).equals(sha1ForObject(initialCommit))) {
+            //即只有一个分支
+            if (temp.getParentSha2() == null) {
+                showCommitForBasicLog(temp);
+                Commit parentCommit = getCommit(temp.getParentSha1());
+                temp = parentCommit;
+            } else {
+                //有两个分支即底下需要做的 TODO:
+            }
+
+        }
+        //输出的是initialCommit的信息
+        showCommitForBasicLog(initialCommit);
 
     }
 
