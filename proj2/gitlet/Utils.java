@@ -81,8 +81,8 @@ class Utils {
      * @return
      */
     public static String sha1ForObject(Commit commit) {
-        byte[] serialize = serialize(commit);
-        String sha1 = sha1(serialize);
+        String s = commit.toString();
+        String sha1 = sha1(s);
         return sha1;
     }
 

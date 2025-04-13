@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Date; // TODO: You'll likely use this in this class
 import java.util.HashMap;
+import java.util.TreeMap;
 
 /** Represents a gitlet commit object.
  *
@@ -21,7 +22,9 @@ public class Commit implements Serializable {
      * variable is used. We've provided one example for `message`.
      */
 
-    /** The message of this Commit. */
+    /**
+     * The message of this Commit.
+     */
     private String message;
     private Instant commit_date;
     private String parentSha1;
@@ -54,5 +57,17 @@ public class Commit implements Serializable {
 
     public String getParentSha2() {
         return parentSha2;
+    }
+
+    @Override
+    public String toString() {
+        TreeMap<String, String> sortedMap = new TreeMap<>(map);
+        return "Commit{" +
+                "message='" + message + '\'' +
+                ", commit_date=" + commit_date +
+                ", parentSha1='" + parentSha1 + '\'' +
+                ", parentSha2='" + parentSha2 + '\'' +
+                ", sortedmap=" + sortedMap +
+                '}';
     }
 }
