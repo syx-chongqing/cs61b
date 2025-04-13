@@ -44,6 +44,13 @@ public class Main {
                 }
                 Repository.log();
                 break;
+            case "checkout":
+                if (args.length == 2 || args.length == 4 || args.length == 3) {
+                    Repository.checkout(args);
+                } else {
+                    System.exit(0);
+                }
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);

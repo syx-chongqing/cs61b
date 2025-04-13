@@ -263,5 +263,60 @@ public class Repository {
 
     }
 
+    /**
+     * Usages:
+     * java gitlet.Main checkout -- [file name]
+     * java gitlet.Main checkout [commit id] -- [file name]
+     * java gitlet.Main checkout [branch name]
+     * 这里只需要完成第一种和第二种，第三种以后再做TODO:
+     * 第一种：
+     * 从当前分支的最新提交（即 HEAD）中取出该文件的版本，并放入工作目录中，覆盖当前已有的同名文件（如果有）。注意这个新文件不会被加入暂存区
+     * 第二种：
+     * 从指定的提交中取出该文件的版本，并放入工作目录中，同样会覆盖已有的文件（如果有），新文件也不会被加入暂存区
+     * 第三种：
+     * 从指定分支的最新提交中，取出其中的所有文件并放入工作目录，覆盖已有的版本，然后
+     * 1.当前分支变为这个指定的分支（即head指向这个分支）
+     * 2.如果当前分支中追踪的某些文件在目标分支中不存在，这些文件会被删除
+     * 3.暂存区会被清空，除非你checkout的就是当前分支本身（见失败情况）
+     */
+    public static void checkout(String[] args) {
+        loadForHead();
+        if (args.length == 2) {
+            //第三种情况
+        } else if (args.length == 3) {
+            //第一种情况
+            if (head.getMap().containsKey(args[2])) {
+                //当前分支中有该文件
+                String sha1ValueForFile = head.getMap().get(args[2]);
+                Utils.writeContents(join(CWD, args[2]), readContents(join(join(BLOBS_DIR, sha1ValueForFile.substring(0, 2)), sha1ValueForFile)));
+            } else {
+                //当前分支中没有该文件
+                error("File does not exist in that commit.");
+            }
+        } else if (args.length == 4) {
+            //第二种情况
+            String commitId = args[1];
+            Commit temp = head;
+            while (!temp.equals(initialCommit)) {
+                if (sha1ForObject(temp).equals(commitId)) {
+                    break;
+                }
+                Commit parentCommit = getCommit(temp.getParentSha1());
+                temp = parentCommit;
+            }
+            if (temp.equals(initialCommit)) {
+                System.out.println("No commit with that id exists.");
+                System.exit(0);
+            }
+            if (temp.getMap().containsKey(args[3])) {
+                String sha1ValueForFile = temp.getMap().get(args[3]);
+                Utils.writeContents(join(CWD, args[3]), readContents(join(join(BLOBS_DIR, sha1ValueForFile.substring(0, 2)), sha1ValueForFile)));
+            } else {
+                error("File does not exist in that commit.");
+            }
+
+        }
+    }
+
 
 }
